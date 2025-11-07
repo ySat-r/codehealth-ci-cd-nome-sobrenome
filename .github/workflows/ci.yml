@@ -1,0 +1,57 @@
+name: CodeHealth CI/CD Pipeline (Java)
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Simulate Build (Compile)
+        run: javac App.java
+
+      - name: Simulate Tests (Run)
+        id: tests
+        run: java App
+
+      - name: Report Success
+        if: ${{ success() }}
+        run: echo "Pipeline de Build e Teste finalizado com sucesso."
+
+      - name: Create simulated artifact
+        if: ${{ success() }}
+        run: |
+          mkdir staging
+          cp App.java staging/
+          cp App.class staging/
+          zip -r codehealth-artifact.zip staging/
+      
+      - name: Archive build artifact
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: codehealth-artifact
+          path: codehealth-artifact.zip
+
+  deploy-staging:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: ${{ success() }}
+    steps:
+      - name: Simulate Deploy to Staging (Homologação)
+        run: |
+          echo "Iniciando deploy para Homologação..."
+          echo "Implantando artefato Java..."
